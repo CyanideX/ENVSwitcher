@@ -8,7 +8,7 @@ class EditWeatherApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Edit Weather States")
-        self.root.minsize(500, 300)
+        self.root.minsize(700, 300)
 
         self.env_file_path = self.get_env_file_path()
         self.data = self.load_json(self.env_file_path)
@@ -17,21 +17,34 @@ class EditWeatherApp:
         left_frame = tk.Frame(root)
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
+        middle_frame = tk.Frame(root)
+        middle_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
         right_frame = tk.Frame(root)
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Add headers
-        self.left_header = tk.Label(left_frame, text="Select Weather State")
+        self.left_header = tk.Label(left_frame, text="Preceding States")
         self.left_header.pack(pady=(0, 5))
+
+        self.middle_header = tk.Label(middle_frame, text="Select Weather State")
+        self.middle_header.pack(pady=(0, 5))
 
         self.right_header = tk.Label(right_frame, text="Select Target States")
         self.right_header.pack(pady=(0, 5))
 
-        self.left_listbox = tk.Listbox(left_frame)
+        self.left_listbox = tk.Listbox(middle_frame)
         self.left_listbox.pack(fill=tk.BOTH, expand=True, pady=10)
 
+        self.preceding_vars = {}
         self.target_vars = {}
         self.current_transitions = self.load_current_transitions()
+
+        for state in self.data['Data']['RootChunk']['weatherStates']:
+            var = tk.BooleanVar()
+            chk = ttk.Checkbutton(left_frame, text=state['Data']['name']['$value'], variable=var, command=self.on_checkbox_select)
+            chk.pack(anchor='w', padx=10, pady=0)
+            self.preceding_vars[state['Data']['name']['$value']] = var
 
         for state in self.data['Data']['RootChunk']['weatherStates']:
             var = tk.BooleanVar()
@@ -92,8 +105,16 @@ class EditWeatherApp:
             selected_state = self.left_listbox.get(selected_index)
             source_state_id = self.get_state_id_by_name(selected_state)
 
+            for state_name, var in self.preceding_vars.items():
+                var.set(False)
+
             for state_name, var in self.target_vars.items():
                 var.set(False)
+
+            for transition in self.data['Data']['RootChunk']['weatherStateTransitions']:
+                if transition['Data']['targetWeatherState']['HandleRefId'] == source_state_id:
+                    preceding_state_name = self.get_state_name_by_id(transition['Data']['sourceWeatherState']['HandleRefId'])
+                    self.preceding_vars[preceding_state_name].set(True)
 
             if source_state_id in self.current_transitions:
                 for target_state_id in self.current_transitions[source_state_id]:
@@ -109,27 +130,68 @@ class EditWeatherApp:
             selected_targets = [name for name, var in self.target_vars.items() if var.get()]
             self.current_transitions[source_state_id] = [self.get_state_id_by_name(name) for name in selected_targets]
 
+            selected_preceding = [name for name, var in self.preceding_vars.items() if var.get()]
+            for name in selected_preceding:
+                preceding_state_id = self.get_state_id_by_name(name)
+                if preceding_state_id not in self.current_transitions:
+                    self.current_transitions[preceding_state_id] = []
+                if source_state_id not in self.current_transitions[preceding_state_id]:
+                    self.current_transitions[preceding_state_id].append(source_state_id)
+
     def save_changes(self):
         new_transitions = []
-        for source_id, target_ids in self.current_transitions.items():
-            for target_id in target_ids:
-                transition = {
-                    "HandleId": "0",
-                    "Data": {
-                        "$type": "worldWeatherStateTransition",
-                        "probability": None,
-                        "sourceWeatherState": {
-                            "HandleRefId": source_id
-                        },
-                        "targetWeatherState": {
-                            "HandleRefId": target_id
-                        },
-                        "transitionDuration": None
-                    }
-                }
-                new_transitions.append(transition)
+        selected_index = self.left_listbox.curselection()
+        if selected_index:
+            selected_state_name = self.left_listbox.get(selected_index)
+            selected_state_id = self.get_state_id_by_name(selected_state_name)
 
-        self.data['Data']['RootChunk']['weatherStateTransitions'] = self.remove_duplicates(new_transitions)
+            for state_name, var in self.preceding_vars.items():
+                if var.get():
+                    source_state_id = self.get_state_id_by_name(state_name)
+                    transition = {
+                        "HandleId": "0",
+                        "Data": {
+                            "$type": "worldWeatherStateTransition",
+                            "probability": None,
+                            "sourceWeatherState": {
+                                "HandleRefId": source_state_id
+                            },
+                            "targetWeatherState": {
+                                "HandleRefId": selected_state_id
+                            },
+                            "transitionDuration": None
+                        }
+                    }
+                    new_transitions.append(transition)
+
+            for state_name, var in self.target_vars.items():
+                if var.get():
+                    target_state_id = self.get_state_id_by_name(state_name)
+                    transition = {
+                        "HandleId": "0",
+                        "Data": {
+                            "$type": "worldWeatherStateTransition",
+                            "probability": None,
+                            "sourceWeatherState": {
+                                "HandleRefId": selected_state_id
+                            },
+                            "targetWeatherState": {
+                                "HandleRefId": target_state_id
+                            },
+                            "transitionDuration": None
+                        }
+                    }
+                    new_transitions.append(transition)
+
+            # Remove transitions related to the selected state that are not in the new transitions
+            self.data['Data']['RootChunk']['weatherStateTransitions'] = [
+                t for t in self.data['Data']['RootChunk']['weatherStateTransitions']
+                if not (t['Data']['sourceWeatherState']['HandleRefId'] == selected_state_id or
+                        t['Data']['targetWeatherState']['HandleRefId'] == selected_state_id)
+            ]
+
+            self.data['Data']['RootChunk']['weatherStateTransitions'].extend(new_transitions)
+
         self.ensure_unique_handle_ids()
         self.save_json(self.env_file_path)
 
@@ -164,12 +226,57 @@ class EditWeatherApp:
 
     def ensure_unique_handle_ids(self):
         handle_id = 0
+        handle_id_map = {}
+
+        # Assign unique HandleIds to weatherStates
         for state in self.data['Data']['RootChunk']['weatherStates']:
             state['HandleId'] = str(handle_id)
+            handle_id_map[state['HandleId']] = handle_id
             handle_id += 1
 
+        # Assign unique HandleIds to weatherStateTransitions
         for transition in self.data['Data']['RootChunk']['weatherStateTransitions']:
             transition['HandleId'] = str(handle_id)
+            handle_id_map[transition['HandleId']] = handle_id
+            handle_id += 1
+
+        # Assign unique HandleIds to other elements
+        for key, value in self.data['Data']['RootChunk'].items():
+            if key not in ['weatherStates', 'weatherStateTransitions']:
+                if isinstance(value, list):
+                    for item in value:
+                        if 'HandleId' in item:
+                            item['HandleId'] = str(handle_id)
+                            handle_id_map[item['HandleId']] = handle_id
+                            handle_id += 1
+
+        # Update HandleRefIds to match new HandleIds
+        def update_handle_ref_ids(data):
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    if key == 'HandleRefId' and value in handle_id_map:
+                        data[key] = str(handle_id_map[value])
+                    else:
+                        update_handle_ref_ids(value)
+            elif isinstance(data, list):
+                for item in data:
+                    update_handle_ref_ids(item)
+
+        update_handle_ref_ids(self.data['Data']['RootChunk'])
+
+        # Update HandleRefIds in weatherStateTransitions
+        for transition in self.data['Data']['RootChunk']['weatherStateTransitions']:
+            source_id = transition['Data']['sourceWeatherState']['HandleRefId']
+            target_id = transition['Data']['targetWeatherState']['HandleRefId']
+            if source_id in handle_id_map:
+                transition['Data']['sourceWeatherState']['HandleRefId'] = str(handle_id_map[source_id])
+            if target_id in handle_id_map:
+                transition['Data']['targetWeatherState']['HandleRefId'] = str(handle_id_map[target_id])
+
+        # Ensure HandleIds for worldRenderSettings are updated
+        for area in self.data['Data']['RootChunk']['worldRenderSettings']['areaParameters']:
+            area['HandleId'] = str(handle_id)
+            handle_id_map[area['HandleId']] = handle_id
             handle_id += 1
 
 if __name__ == "__main__":
