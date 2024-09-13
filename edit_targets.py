@@ -279,6 +279,17 @@ class EditWeatherApp:
             handle_id_map[area['HandleId']] = handle_id
             handle_id += 1
 
+            # Update HandleIds for hdrMode and mode
+            if 'hdrMode' in area['Data']:
+                area['Data']['hdrMode']['HandleId'] = str(handle_id)
+                handle_id_map[area['Data']['hdrMode']['HandleId']] = handle_id
+                handle_id += 1
+
+            if 'mode' in area['Data']:
+                area['Data']['mode']['HandleId'] = str(handle_id)
+                handle_id_map[area['Data']['mode']['HandleId']] = handle_id
+                handle_id += 1
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = EditWeatherApp(root)
