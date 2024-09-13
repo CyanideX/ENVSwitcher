@@ -8,7 +8,11 @@ class EditWeatherApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Edit Weather States")
+
+        # Set the initial size of the window
+        self.root.geometry("700x400")
         self.root.minsize(700, 300)
+        self.root.maxsize(1920, 2160)
 
         self.env_file_path = self.get_env_file_path()
         self.data = self.load_json(self.env_file_path)
@@ -27,9 +31,11 @@ class EditWeatherApp:
         button_frame = tk.Frame(root)
         button_frame.grid(row=1, column=0, columnspan=3, pady=10)
 
-        self.confirm_button = tk.Button(button_frame, text="Save", command=self.save_changes)
-        self.confirm_button.pack(pady=10)
+        button_width = 25
 
+        self.confirm_button = tk.Button(button_frame, text="Save", command=self.save_changes, width=button_width)
+        self.confirm_button.pack(pady=10)
+        
         self.confirm_label = tk.Label(button_frame, text="", fg="green")
         self.confirm_label.pack()
 
@@ -43,6 +49,13 @@ class EditWeatherApp:
         self.right_header = tk.Label(right_frame, text="Select Target States")
         self.right_header.pack(pady=(0, 5))
 
+        # Add scrollbars to the left and right frames
+        left_scrollbar = tk.Scrollbar(left_frame, orient=tk.VERTICAL)
+        left_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        right_scrollbar = tk.Scrollbar(right_frame, orient=tk.VERTICAL)
+        right_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
         self.left_listbox = tk.Listbox(middle_frame)
         self.left_listbox.pack(fill=tk.BOTH, expand=True, pady=10)
 
@@ -50,15 +63,29 @@ class EditWeatherApp:
         self.target_vars = {}
         self.current_transitions = self.load_current_transitions()
 
+        left_canvas = tk.Canvas(left_frame, yscrollcommand=left_scrollbar.set)
+        left_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        left_scrollbar.config(command=left_canvas.yview)
+
+        left_inner_frame = tk.Frame(left_canvas)
+        left_canvas.create_window((0, 0), window=left_inner_frame, anchor='nw')
+
+        right_canvas = tk.Canvas(right_frame, yscrollcommand=right_scrollbar.set)
+        right_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        right_scrollbar.config(command=right_canvas.yview)
+
+        right_inner_frame = tk.Frame(right_canvas)
+        right_canvas.create_window((0, 0), window=right_inner_frame, anchor='nw')
+
         for state in self.data['Data']['RootChunk']['weatherStates']:
             var = tk.BooleanVar()
-            chk = ttk.Checkbutton(left_frame, text=state['Data']['name']['$value'], variable=var, command=self.on_checkbox_select)
+            chk = ttk.Checkbutton(left_inner_frame, text=state['Data']['name']['$value'], variable=var, command=self.on_checkbox_select)
             chk.pack(anchor='w', padx=10, pady=0)
             self.preceding_vars[state['Data']['name']['$value']] = var
 
         for state in self.data['Data']['RootChunk']['weatherStates']:
             var = tk.BooleanVar()
-            chk = ttk.Checkbutton(right_frame, text=state['Data']['name']['$value'], variable=var, command=self.on_checkbox_select)
+            chk = ttk.Checkbutton(right_inner_frame, text=state['Data']['name']['$value'], variable=var, command=self.on_checkbox_select)
             chk.pack(anchor='w', padx=10, pady=0)
             self.target_vars[state['Data']['name']['$value']] = var
 
@@ -72,6 +99,10 @@ class EditWeatherApp:
         root.grid_columnconfigure(0, weight=1, minsize=200)
         root.grid_columnconfigure(1, weight=1, minsize=200)
         root.grid_columnconfigure(2, weight=1, minsize=200)
+
+        # Update scrollregion when the inner frames change size
+        left_inner_frame.bind("<Configure>", lambda e: left_canvas.configure(scrollregion=left_canvas.bbox("all")))
+        right_inner_frame.bind("<Configure>", lambda e: right_canvas.configure(scrollregion=right_canvas.bbox("all")))
 
     def get_env_file_path(self):
         if os.path.exists('env_file_path.txt'):
