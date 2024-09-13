@@ -50,10 +50,10 @@ class EditWeatherApp:
         self.right_header.pack(pady=(0, 5))
 
         # Add scrollbars to the left and right frames
-        left_scrollbar = tk.Scrollbar(left_frame, orient=tk.VERTICAL)
+        left_scrollbar = tk.Scrollbar(left_frame, orient=tk.VERTICAL, width=20)
         left_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        right_scrollbar = tk.Scrollbar(right_frame, orient=tk.VERTICAL)
+        right_scrollbar = tk.Scrollbar(right_frame, orient=tk.VERTICAL, width=20)
         right_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.left_listbox = tk.Listbox(middle_frame)
@@ -76,6 +76,13 @@ class EditWeatherApp:
 
         right_inner_frame = tk.Frame(right_canvas)
         right_canvas.create_window((0, 0), window=right_inner_frame, anchor='nw')
+
+        # Bind mouse wheel events to the canvases for scrolling
+        left_canvas.bind("<Enter>", lambda event: self._bind_mousewheel(event, left_canvas))
+        left_canvas.bind("<Leave>", lambda event: self._unbind_mousewheel(event))
+
+        right_canvas.bind("<Enter>", lambda event: self._bind_mousewheel(event, right_canvas))
+        right_canvas.bind("<Leave>", lambda event: self._unbind_mousewheel(event))
 
         for state in self.data['Data']['RootChunk']['weatherStates']:
             var = tk.BooleanVar()
@@ -103,6 +110,15 @@ class EditWeatherApp:
         # Update scrollregion when the inner frames change size
         left_inner_frame.bind("<Configure>", lambda e: left_canvas.configure(scrollregion=left_canvas.bbox("all")))
         right_inner_frame.bind("<Configure>", lambda e: right_canvas.configure(scrollregion=right_canvas.bbox("all")))
+
+    def _bind_mousewheel(self, event, canvas):
+        canvas.bind_all("<MouseWheel>", lambda e: self._on_mousewheel(e, canvas))
+
+    def _unbind_mousewheel(self, event):
+        event.widget.unbind_all("<MouseWheel>")
+
+    def _on_mousewheel(self, event, canvas):
+        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
     def get_env_file_path(self):
         if os.path.exists('env_file_path.txt'):
