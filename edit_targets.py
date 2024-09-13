@@ -67,11 +67,11 @@ class EditWeatherApp:
 
         self.left_listbox.bind('<<ListboxSelect>>', self.on_left_listbox_select)
 
-        # Configure grid weights to ensure proper resizing
+        # Configure grid weights and minimum column widths to ensure proper resizing
         root.grid_rowconfigure(0, weight=1)
-        root.grid_columnconfigure(0, weight=1)
-        root.grid_columnconfigure(1, weight=1)
-        root.grid_columnconfigure(2, weight=1)
+        root.grid_columnconfigure(0, weight=1, minsize=200)
+        root.grid_columnconfigure(1, weight=1, minsize=200)
+        root.grid_columnconfigure(2, weight=1, minsize=200)
 
     def get_env_file_path(self):
         if os.path.exists('env_file_path.txt'):
