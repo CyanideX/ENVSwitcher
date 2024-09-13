@@ -15,13 +15,23 @@ class EditWeatherApp:
 
         # Create frames for the headers and listboxes
         left_frame = tk.Frame(root)
-        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        left_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
         middle_frame = tk.Frame(root)
-        middle_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        middle_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
 
         right_frame = tk.Frame(root)
-        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        right_frame.grid(row=0, column=2, sticky="nsew", padx=10, pady=10)
+
+        # Create a frame for the Save button and center it
+        button_frame = tk.Frame(root)
+        button_frame.grid(row=1, column=0, columnspan=3, pady=10)
+
+        self.confirm_button = tk.Button(button_frame, text="Save", command=self.save_changes)
+        self.confirm_button.pack(pady=10)
+
+        self.confirm_label = tk.Label(button_frame, text="", fg="green")
+        self.confirm_label.pack()
 
         # Add headers
         self.left_header = tk.Label(left_frame, text="Preceding States")
@@ -52,19 +62,16 @@ class EditWeatherApp:
             chk.pack(anchor='w', padx=10, pady=0)
             self.target_vars[state['Data']['name']['$value']] = var
 
-        button_frame = tk.Frame(right_frame)
-        button_frame.pack(anchor='w', pady=10)
-
-        self.confirm_button = tk.Button(button_frame, text="Save", command=self.save_changes)
-        self.confirm_button.pack(side=tk.LEFT, padx=10)
-
-        self.confirm_label = tk.Label(button_frame, text="", fg="green")
-        self.confirm_label.pack(side=tk.LEFT, padx=0)
-
         for state in self.data['Data']['RootChunk']['weatherStates']:
             self.left_listbox.insert(tk.END, state['Data']['name']['$value'])
 
         self.left_listbox.bind('<<ListboxSelect>>', self.on_left_listbox_select)
+
+        # Configure grid weights to ensure proper resizing
+        root.grid_rowconfigure(0, weight=1)
+        root.grid_columnconfigure(0, weight=1)
+        root.grid_columnconfigure(1, weight=1)
+        root.grid_columnconfigure(2, weight=1)
 
     def get_env_file_path(self):
         if os.path.exists('env_file_path.txt'):
