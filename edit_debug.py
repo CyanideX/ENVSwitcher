@@ -1,78 +1,49 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import messagebox
+from tkinter import ttk
 import json
 import os
+import threading
+import time
 
 class EditDebugApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Debug - Global Editor")
-        self.root.minsize(200, 150)  # Set minimum width to 400
-
-        self.entries = {
-            "Min Duration": tk.StringVar(),
-            "Max Duration": tk.StringVar(),
-            "Probability": tk.StringVar(),
-            "Transition Duration": tk.StringVar()
-        }
+        self.root.title("Debug")
+        self.root.minsize(300, 150)
 
         self.env_file_path = self.get_env_file_path()
-        self.data = self.load_json(self.env_file_path)  # Initialize the data attribute
+        self.data = self.load_json(self.env_file_path)
 
-        self.create_widgets()
+        right_frame = tk.Frame(root)
+        right_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-    def create_widgets(self):
-        frame = ttk.Frame(self.root, padding="10")
-        frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
+        self.right_header = tk.Label(right_frame, text="Edit Global Properties")
+        self.right_header.pack(pady=(0, 25))
 
-        # Add header
-        header = ttk.Label(frame, text="Global overrides")
-        header.grid(row=0, column=0, columnspan=2, pady=(0, 0))
+        self.entries = {}
+        self.create_entries(right_frame)
 
-        ttk.Label(frame, text="Min Duration:").grid(row=1, column=0, sticky=tk.W)
-        ttk.Entry(frame, textvariable=self.entries["Min Duration"]).grid(row=1, column=1, sticky=(tk.W, tk.E))
+        self.confirm_button = tk.Button(right_frame, text="Save", command=self.save_changes)
+        self.confirm_button.pack(side=tk.LEFT, padx=10, pady=10)
 
-        ttk.Label(frame, text="Max Duration:").grid(row=2, column=0, sticky=tk.W)
-        ttk.Entry(frame, textvariable=self.entries["Max Duration"]).grid(row=2, column=1, sticky=(tk.W, tk.E))
+        self.confirm_label = tk.Label(right_frame, text="", fg="green")
+        self.confirm_label.pack(side=tk.LEFT, padx=10)
 
-        ttk.Label(frame, text="Probability:").grid(row=3, column=0, sticky=tk.W)
-        ttk.Entry(frame, textvariable=self.entries["Probability"]).grid(row=3, column=1, sticky=(tk.W, tk.E))
+        # Start the file watcher thread
+        self.stop_watching = False
+        self.file_watcher_thread = threading.Thread(target=self.watch_file)
+        self.file_watcher_thread.start()
 
-        ttk.Label(frame, text="Transition Duration:").grid(row=4, column=0, sticky=tk.W)
-        ttk.Entry(frame, textvariable=self.entries["Transition Duration"]).grid(row=4, column=1, sticky=(tk.W, tk.E))
-
-        ttk.Button(frame, text="Save Changes", command=self.save_changes).grid(row=5, column=0, columnspan=2, pady=10)
-
-    def save_changes(self):
-        for state in self.data['Data']['RootChunk']['weatherStates']:
-            state_data = state['Data']
-
-            self.update_field(state_data, 'minDuration', self.entries["Min Duration"])
-            self.update_field(state_data, 'maxDuration', self.entries["Max Duration"])
-            self.update_field(state_data, 'probability', self.entries["Probability"])
-            self.update_field(state_data, 'transitionDuration', self.entries["Transition Duration"])
-
-        self.save_json(self.env_file_path)
-
-    def update_field(self, state_data, field_name, entry):
-        value = self.get_entry_value(entry)
-        if value is None:
-            state_data[field_name] = None
-        else:
-            state_data[field_name] = {
-                "InterpolationType": "Linear",
-                "LinkType": "ESLT_Normal",
-                "Elements": [{"Point": 12, "Value": value}]
-            }
-
-    def get_entry_value(self, entry):
-        value = entry.get()
-        if value == "":
-            return None
-        try:
-            return float(value)
-        except ValueError:
-            return None
+    def create_entries(self, parent):
+        labels = ["            Min Duration: ", "           Max Duration: ", "                Probability: ", " Transition Duration: "]
+        for label in labels:
+            frame = tk.Frame(parent)
+            frame.pack(fill=tk.X, padx=10, pady=5)
+            tk.Label(frame, text=label).pack(side=tk.LEFT)
+            entry = tk.Entry(frame)
+            entry.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+            self.entries[label] = entry
 
     def get_env_file_path(self):
         if os.path.exists('env_file_path.txt'):
@@ -82,15 +53,72 @@ class EditDebugApp:
             messagebox.showerror("Error", "env_file_path.txt not found.")
             self.root.quit()
 
-    def load_json(self, filename):
-        with open(filename, 'r') as file:
-            return json.load(file)
+    def load_json(self, file_path):
+        try:
+            with open(file_path, 'r') as file:
+                return json.load(file)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load JSON file: {e}")
+            return {}
 
-    def save_json(self, filename):
-        with open(filename, 'w') as file:
-            json.dump(self.data, file, indent=4)
+    def save_json(self, file_path):
+        try:
+            with open(file_path, 'w') as file:
+                json.dump(self.data, file, indent=4)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save JSON file: {e}")
+
+    def save_changes(self):
+        def update_field(field_name, entry_name):
+            value = self.get_entry_value(self.entries[entry_name])
+            for state in self.data['Data']['RootChunk']['weatherStates']:
+                if value is None:
+                    state['Data'][field_name] = None
+                else:
+                    state['Data'][field_name] = {
+                        "InterpolationType": "Linear",
+                        "LinkType": "ESLT_Normal",
+                        "Elements": [{"Point": 12, "Value": value}]
+                    }
+
+        update_field('minDuration', 'Min Duration')
+        update_field('maxDuration', 'Max Duration')
+        update_field('probability', 'Probability')
+        update_field('transitionDuration', 'Transition Duration')
+
+        self.save_json(self.env_file_path)
+
+        # Show confirmation message
+        self.confirm_label.config(text="Changes saved successfully!")
+        self.root.after(3000, self.clear_confirmation)
+
+    def clear_confirmation(self):
+        self.confirm_label.config(text="")
+
+    def get_entry_value(self, entry):
+        value = entry.get()
+        if value == "":
+            return None
+        return float(value)
+
+    def watch_file(self):
+        last_modified_time = os.path.getmtime(self.env_file_path)
+        while not self.stop_watching:
+            time.sleep(1)
+            current_modified_time = os.path.getmtime(self.env_file_path)
+            if current_modified_time != last_modified_time:
+                last_modified_time = current_modified_time
+                self.reload_json()
+
+    def reload_json(self):
+        self.data = self.load_json(self.env_file_path)
+
+    def on_closing(self):
+        self.stop_watching = True
+        self.root.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = EditDebugApp(root)
+    root.protocol("WM_DELETE_WINDOW", app.on_closing)
     root.mainloop()
