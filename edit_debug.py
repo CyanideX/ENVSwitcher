@@ -36,11 +36,11 @@ class EditDebugApp:
         self.file_watcher_thread.start()
 
     def create_entries(self, parent):
-        labels = ["            Min Duration: ", "           Max Duration: ", "                Probability: ", " Transition Duration: "]
+        labels = ["Min Duration", "Max Duration", "Probability", "Transition Duration"]
         for label in labels:
             frame = tk.Frame(parent)
             frame.pack(fill=tk.X, padx=10, pady=5)
-            tk.Label(frame, text=label).pack(side=tk.LEFT)
+            tk.Label(frame, text=label, anchor='w', padx=10).pack(side=tk.LEFT)
             entry = tk.Entry(frame)
             entry.pack(side=tk.RIGHT, fill=tk.X, expand=True)
             self.entries[label] = entry
