@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import json
 import os
 
@@ -42,31 +42,30 @@ class EditDebugApp:
         for state in self.data['Data']['RootChunk']['weatherStates']:
             state_data = state['Data']
 
-            if 'minDuration' in state_data and state_data['minDuration'] is not None:
-                min_duration = self.get_entry_value(self.entries["Min Duration"])
-                if min_duration is not None:
-                    state_data['minDuration']['Elements'][0]['Value'] = min_duration
-
-            if 'maxDuration' in state_data and state_data['maxDuration'] is not None:
-                max_duration = self.get_entry_value(self.entries["Max Duration"])
-                if max_duration is not None:
-                    state_data['maxDuration']['Elements'][0]['Value'] = max_duration
-
-            if 'probability' in state_data and state_data['probability'] is not None:
-                probability = self.get_entry_value(self.entries["Probability"])
-                if probability is not None:
-                    state_data['probability']['Elements'][0]['Value'] = probability
-
-            if 'transitionDuration' in state_data and state_data['transitionDuration'] is not None:
-                transition_duration = self.get_entry_value(self.entries["Transition Duration"])
-                if transition_duration is not None:
-                    state_data['transitionDuration']['Elements'][0]['Value'] = transition_duration
+            self.update_field(state_data, 'minDuration', self.entries["Min Duration"])
+            self.update_field(state_data, 'maxDuration', self.entries["Max Duration"])
+            self.update_field(state_data, 'probability', self.entries["Probability"])
+            self.update_field(state_data, 'transitionDuration', self.entries["Transition Duration"])
 
         self.save_json(self.env_file_path)
 
+    def update_field(self, state_data, field_name, entry):
+        value = self.get_entry_value(entry)
+        if value is None:
+            state_data[field_name] = None
+        else:
+            state_data[field_name] = {
+                "InterpolationType": "Linear",
+                "LinkType": "ESLT_Normal",
+                "Elements": [{"Point": 12, "Value": value}]
+            }
+
     def get_entry_value(self, entry):
+        value = entry.get()
+        if value == "":
+            return None
         try:
-            return float(entry.get())
+            return float(value)
         except ValueError:
             return None
 
@@ -75,7 +74,7 @@ class EditDebugApp:
             with open('env_file_path.txt', 'r') as file:
                 return file.read().strip()
         else:
-            tk.messagebox.showerror("Error", "env_file_path.txt not found.")
+            messagebox.showerror("Error", "env_file_path.txt not found.")
             self.root.quit()
 
     def load_json(self, filename):
