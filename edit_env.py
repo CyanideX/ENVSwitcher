@@ -133,6 +133,21 @@ class WeatherApp:
             if file_name not in self.left_listbox.get(0, tk.END):
                 self.left_listbox.insert(tk.END, file_name)
                 self.right_listbox.delete(index)
+                # Find and remove the corresponding weather state and transitions
+                for state in self.data['Data']['RootChunk']['weatherStates']:
+                    if state['Data']['name']['$value'] == file_name:
+                        handle_id = state['HandleId']
+                        self.data['Data']['RootChunk']['weatherStates'].remove(state)
+                        self.remove_transitions(handle_id)
+                        break
+    
+    def remove_transitions(self, handle_id):
+        transitions = self.data['Data']['RootChunk']['weatherStateTransitions']
+        self.data['Data']['RootChunk']['weatherStateTransitions'] = [
+            transition for transition in transitions
+            if transition['Data']['sourceWeatherState']['HandleRefId'] != handle_id and
+            transition['Data']['targetWeatherState']['HandleRefId'] != handle_id
+        ]
 
     def confirm_additions(self):
         if messagebox.askyesno("Confirm Save", "Are you sure you want to save the changes?"):
