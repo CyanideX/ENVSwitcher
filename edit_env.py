@@ -205,13 +205,69 @@ class WeatherApp:
 
     def ensure_unique_handle_ids(self):
         handle_id = 0
-        for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
+        handle_id_map = {}
+
+        # Assign unique HandleIds to weatherStates
+        for state in self.data['Data']['RootChunk']['weatherStates']:
             state['HandleId'] = str(handle_id)
+            handle_id_map[state['HandleId']] = handle_id
             handle_id += 1
 
-        for transition in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStateTransitions', []):
+        # Assign unique HandleIds to weatherStateTransitions
+        for transition in self.data['Data']['RootChunk']['weatherStateTransitions']:
             transition['HandleId'] = str(handle_id)
+            handle_id_map[transition['HandleId']] = handle_id
             handle_id += 1
+
+        # Assign unique HandleIds to other elements
+        for key, value in self.data['Data']['RootChunk'].items():
+            if key not in ['weatherStates', 'weatherStateTransitions']:
+                if isinstance(value, list):
+                    for item in value:
+                        if 'HandleId' in item:
+                            item['HandleId'] = str(handle_id)
+                            handle_id_map[item['HandleId']] = handle_id
+                            handle_id += 1
+
+        # Update HandleRefIds to match new HandleIds
+        def update_handle_ref_ids(data):
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    if key == 'HandleRefId' and value in handle_id_map:
+                        data[key] = str(handle_id_map[value])
+                    else:
+                        update_handle_ref_ids(value)
+            elif isinstance(data, list):
+                for item in data:
+                    update_handle_ref_ids(item)
+
+        update_handle_ref_ids(self.data['Data']['RootChunk'])
+
+        # Update HandleRefIds in weatherStateTransitions
+        for transition in self.data['Data']['RootChunk']['weatherStateTransitions']:
+            source_id = transition['Data']['sourceWeatherState']['HandleRefId']
+            target_id = transition['Data']['targetWeatherState']['HandleRefId']
+            if source_id in handle_id_map:
+                transition['Data']['sourceWeatherState']['HandleRefId'] = str(handle_id_map[source_id])
+            if target_id in handle_id_map:
+                transition['Data']['targetWeatherState']['HandleRefId'] = str(handle_id_map[target_id])
+
+        # Ensure HandleIds for worldRenderSettings are updated
+        for area in self.data['Data']['RootChunk']['worldRenderSettings']['areaParameters']:
+            area['HandleId'] = str(handle_id)
+            handle_id_map[area['HandleId']] = handle_id
+            handle_id += 1
+
+            # Update HandleIds for hdrMode and mode
+            if 'hdrMode' in area['Data']:
+                area['Data']['hdrMode']['HandleId'] = str(handle_id)
+                handle_id_map[area['Data']['hdrMode']['HandleId']] = handle_id
+                handle_id += 1
+
+            if 'mode' in area['Data']:
+                area['Data']['mode']['HandleId'] = str(handle_id)
+                handle_id_map[area['Data']['mode']['HandleId']] = handle_id
+                handle_id += 1
 
     def reload_json(self):
         self.data = self.load_json(self.env_file_path)
