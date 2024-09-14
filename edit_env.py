@@ -135,81 +135,82 @@ class WeatherApp:
                 self.right_listbox.delete(index)
 
     def confirm_additions(self):
-        existing_names = {state['Data']['name']['$value'] for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', [])}
-        for index in range(self.right_listbox.size()):
-            file_name = self.right_listbox.get(index)
-            name = file_name.replace('.envparam', '')
-            if name not in existing_names:
-                self.data['Data']['RootChunk']['weatherStates'].append({
-                    'HandleId': "0",
-                    'Data': {
-                        '$type': 'worldWeatherState',
-                        'effect': {
-                            'DepotPath': {
-                                '$type': 'ResourcePath',
-                                '$storage': 'uint64',
-                                '$value': "0"
+        if messagebox.askyesno("Confirm Save", "Are you sure you want to save the changes?"):
+            existing_names = {state['Data']['name']['$value'] for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', [])}
+            for index in range(self.right_listbox.size()):
+                file_name = self.right_listbox.get(index)
+                name = file_name.replace('.envparam', '')
+                if name not in existing_names:
+                    self.data['Data']['RootChunk']['weatherStates'].append({
+                        'HandleId': "0",
+                        'Data': {
+                            '$type': 'worldWeatherState',
+                            'effect': {
+                                'DepotPath': {
+                                    '$type': 'ResourcePath',
+                                    '$storage': 'uint64',
+                                    '$value': "0"
+                                },
+                                'Flags': "Soft"
                             },
-                            'Flags': "Soft"
-                        },
-                        'environmentAreaParameters': {
-                            'DepotPath': {
-                                '$type': 'ResourcePath',
+                            'environmentAreaParameters': {
+                                'DepotPath': {
+                                    '$type': 'ResourcePath',
+                                    '$storage': 'string',
+                                    '$value': f"base\\weather\\24h_basic\\{file_name}.envparam"
+                                },
+                                'Flags': "Default"
+                            },
+                            'maxDuration': {
+                                'InterpolationType': "Linear",
+                                'LinkType': "ESLT_Normal",
+                                'Elements': [
+                                    {
+                                        'Point': 12,
+                                        'Value': 2
+                                    }
+                                ]
+                            },
+                            'minDuration': {
+                                'InterpolationType': "Linear",
+                                'LinkType': "ESLT_Normal",
+                                'Elements': [
+                                    {
+                                        'Point': 12,
+                                        'Value': 1
+                                    }
+                                ]
+                            },
+                            'name': {
+                                '$type': 'CName',
                                 '$storage': 'string',
-                                '$value': f"base\\weather\\24h_basic\\{file_name}.envparam"
+                                '$value': name
                             },
-                            'Flags': "Default"
-                        },
-                        'maxDuration': {
-                            'InterpolationType': "Linear",
-                            'LinkType': "ESLT_Normal",
-                            'Elements': [
-                                {
-                                    'Point': 12,
-                                    'Value': 2
-                                }
-                            ]
-                        },
-                        'minDuration': {
-                            'InterpolationType': "Linear",
-                            'LinkType': "ESLT_Normal",
-                            'Elements': [
-                                {
-                                    'Point': 12,
-                                    'Value': 1
-                                }
-                            ]
-                        },
-                        'name': {
-                            '$type': 'CName',
-                            '$storage': 'string',
-                            '$value': name
-                        },
-                        'probability': {
-                            'InterpolationType': "Linear",
-                            'LinkType': "ESLT_Normal",
-                            'Elements': [
-                                {
-                                    'Point': 12,
-                                    'Value': 0.899999976
-                                }
-                            ]
-                        },
-                        'transitionDuration': {
-                            'InterpolationType': "Linear",
-                            'LinkType': "ESLT_Normal",
-                            'Elements': [
-                                {
-                                    'Point': 12,
-                                    'Value': 0.25
-                                }
-                            ]
+                            'probability': {
+                                'InterpolationType': "Linear",
+                                'LinkType': "ESLT_Normal",
+                                'Elements': [
+                                    {
+                                        'Point': 12,
+                                        'Value': 0.899999976
+                                    }
+                                ]
+                            },
+                            'transitionDuration': {
+                                'InterpolationType': "Linear",
+                                'LinkType': "ESLT_Normal",
+                                'Elements': [
+                                    {
+                                        'Point': 12,
+                                        'Value': 0.25
+                                    }
+                                ]
+                            }
                         }
-                    }
-                })
+                    })
 
-        self.ensure_unique_handle_ids()
-        self.save_json(self.env_file_path)
+            self.ensure_unique_handle_ids()
+            self.save_json(self.env_file_path)
 
     def ensure_unique_handle_ids(self):
         handle_id = 0
