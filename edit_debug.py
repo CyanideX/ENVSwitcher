@@ -7,6 +7,7 @@ class EditDebugApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Debug - Global Editor")
+        self.root.minsize(200, 150)  # Set minimum width to 400
 
         self.entries = {
             "Min Duration": tk.StringVar(),
@@ -24,19 +25,23 @@ class EditDebugApp:
         frame = ttk.Frame(self.root, padding="10")
         frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
 
-        ttk.Label(frame, text="Min Duration:").grid(row=0, column=0, sticky=tk.W)
-        ttk.Entry(frame, textvariable=self.entries["Min Duration"]).grid(row=0, column=1, sticky=(tk.W, tk.E))
+        # Add header
+        header = ttk.Label(frame, text="Global overrides")
+        header.grid(row=0, column=0, columnspan=2, pady=(0, 0))
 
-        ttk.Label(frame, text="Max Duration:").grid(row=1, column=0, sticky=tk.W)
-        ttk.Entry(frame, textvariable=self.entries["Max Duration"]).grid(row=1, column=1, sticky=(tk.W, tk.E))
+        ttk.Label(frame, text="Min Duration:").grid(row=1, column=0, sticky=tk.W)
+        ttk.Entry(frame, textvariable=self.entries["Min Duration"]).grid(row=1, column=1, sticky=(tk.W, tk.E))
 
-        ttk.Label(frame, text="Probability:").grid(row=2, column=0, sticky=tk.W)
-        ttk.Entry(frame, textvariable=self.entries["Probability"]).grid(row=2, column=1, sticky=(tk.W, tk.E))
+        ttk.Label(frame, text="Max Duration:").grid(row=2, column=0, sticky=tk.W)
+        ttk.Entry(frame, textvariable=self.entries["Max Duration"]).grid(row=2, column=1, sticky=(tk.W, tk.E))
 
-        ttk.Label(frame, text="Transition Duration:").grid(row=3, column=0, sticky=tk.W)
-        ttk.Entry(frame, textvariable=self.entries["Transition Duration"]).grid(row=3, column=1, sticky=(tk.W, tk.E))
+        ttk.Label(frame, text="Probability:").grid(row=3, column=0, sticky=tk.W)
+        ttk.Entry(frame, textvariable=self.entries["Probability"]).grid(row=3, column=1, sticky=(tk.W, tk.E))
 
-        ttk.Button(frame, text="Save Changes", command=self.save_changes).grid(row=4, column=0, columnspan=2, pady=10)
+        ttk.Label(frame, text="Transition Duration:").grid(row=4, column=0, sticky=tk.W)
+        ttk.Entry(frame, textvariable=self.entries["Transition Duration"]).grid(row=4, column=1, sticky=(tk.W, tk.E))
+
+        ttk.Button(frame, text="Save Changes", command=self.save_changes).grid(row=5, column=0, columnspan=2, pady=10)
 
     def save_changes(self):
         for state in self.data['Data']['RootChunk']['weatherStates']:
