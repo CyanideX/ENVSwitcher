@@ -4,10 +4,10 @@ from tkinter import ttk
 import json
 import os
 
-class EditWeatherApp:
+class EditTransitionsApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Edit Weather States")
+        self.root.title("Edit Weather Transitions")
 
         # Set the initial size of the window
         self.root.geometry("700x400")
@@ -40,7 +40,7 @@ class EditWeatherApp:
         self.confirm_label.pack()
 
         # Add headers
-        self.left_header = tk.Label(left_frame, text="Preceding States")
+        self.left_header = tk.Label(left_frame, text="Select Source States")
         self.left_header.pack(pady=(0, 5))
 
         self.middle_header = tk.Label(middle_frame, text="Select Weather State")
@@ -346,5 +346,5 @@ class EditWeatherApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = EditWeatherApp(root)
+    app = EditTransitionsApp(root)
     root.mainloop()

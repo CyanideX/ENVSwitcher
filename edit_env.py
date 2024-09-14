@@ -38,7 +38,7 @@ class WeatherApp:
         button_frame = tk.Frame(root)
         button_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=(50, 10))
 
-        self.targets_button = tk.Button(button_frame, text="Targets", command=self.open_edit_targets, width=button_width)
+        self.targets_button = tk.Button(button_frame, text="Transitions", command=self.open_edit_targets, width=button_width)
         self.targets_button.pack(pady=5)
 
         self.properties_button = tk.Button(button_frame, text="Properties", command=self.open_edit_properties, width=button_width)
