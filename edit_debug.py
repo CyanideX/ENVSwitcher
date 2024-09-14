@@ -3,8 +3,6 @@ from tkinter import messagebox
 from tkinter import ttk
 import json
 import os
-import threading
-import time
 
 class EditDebugApp:
     def __init__(self, root):
@@ -29,11 +27,6 @@ class EditDebugApp:
 
         self.confirm_label = tk.Label(right_frame, text="", fg="green")
         self.confirm_label.pack(side=tk.LEFT, padx=10)
-
-        # Start the file watcher thread
-        self.stop_watching = False
-        self.file_watcher_thread = threading.Thread(target=self.watch_file)
-        self.file_watcher_thread.start()
 
     def create_entries(self, parent):
         labels = ["Min Duration", "Max Duration", "Probability", "Transition Duration"]
@@ -103,20 +96,7 @@ class EditDebugApp:
             return None
         return float(value)
 
-    def watch_file(self):
-        last_modified_time = os.path.getmtime(self.env_file_path)
-        while not self.stop_watching:
-            time.sleep(1)
-            current_modified_time = os.path.getmtime(self.env_file_path)
-            if current_modified_time != last_modified_time:
-                last_modified_time = current_modified_time
-                self.reload_json()
-
-    def reload_json(self):
-        self.data = self.load_json(self.env_file_path)
-
     def on_closing(self):
-        self.stop_watching = True
         self.root.destroy()
 
 if __name__ == "__main__":
