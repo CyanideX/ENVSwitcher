@@ -10,7 +10,7 @@ class WeatherApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Weather State Manager")
-        self.root.minsize(550, 320)
+        self.root.minsize(550, 380)
 
         # Create frames for the headers and listboxes
         left_frame = tk.Frame(root)
@@ -33,10 +33,11 @@ class WeatherApp:
         self.right_listbox.pack(fill=tk.BOTH, expand=True, pady=10)
 
         button_width = 15
+        button_width_arrows = 6
 
         # Create a frame to contain the buttons
         button_frame = tk.Frame(root)
-        button_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=(50, 10))
+        button_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=(50, 25))
 
         self.targets_button = tk.Button(button_frame, text="Transitions", command=self.open_edit_targets, width=button_width)
         self.targets_button.pack(pady=5)
@@ -44,20 +45,24 @@ class WeatherApp:
         self.properties_button = tk.Button(button_frame, text="Properties", command=self.open_edit_properties, width=button_width)
         self.properties_button.pack(pady=5)
 
-        self.add_button = tk.Button(button_frame, text=">>>", command=self.move_entries, width=button_width)
-        self.add_button.pack(pady=5)
+        # Create a frame for the add and remove buttons
+        move_button_frame = tk.Frame(button_frame)
+        move_button_frame.pack(pady=5)
 
-        self.remove_button = tk.Button(button_frame, text="<<<", command=self.remove_entries, width=button_width)
-        self.remove_button.pack(pady=5)
+        self.remove_button = tk.Button(move_button_frame, text="<<<", command=self.remove_entries, width=button_width_arrows)
+        self.remove_button.pack(side=tk.LEFT, padx=5)
+
+        self.add_button = tk.Button(move_button_frame, text=">>>", command=self.move_entries, width=button_width_arrows)
+        self.add_button.pack(side=tk.LEFT, padx=5)
 
         self.save_button = tk.Button(button_frame, text="Save", command=self.confirm_additions, width=button_width)
         self.save_button.pack(pady=5)
 
-        self.debug_button = tk.Button(button_frame, text="Debug", command=self.open_edit_debug, width=button_width)
-        self.debug_button.pack(pady=5)
-
         self.reload_button = tk.Button(button_frame, text="Reload JSON", command=self.reload_json, width=button_width)
-        self.reload_button.pack(pady=5)
+        self.reload_button.pack(side=tk.BOTTOM, pady=10)
+
+        self.debug_button = tk.Button(button_frame, text="Debug", command=self.open_edit_debug, width=button_width)
+        self.debug_button.pack(side=tk.BOTTOM, pady=5)
 
         self.env_file_path = self.get_env_file_path()
         self.data = self.load_json(self.env_file_path)
