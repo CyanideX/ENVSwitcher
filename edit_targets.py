@@ -57,7 +57,7 @@ class EditWeatherApp:
         right_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.left_listbox = tk.Listbox(middle_frame)
-        self.left_listbox.pack(fill=tk.BOTH, expand=True, pady=10)
+        self.left_listbox.pack(fill=tk.BOTH, expand=True, pady=0)
 
         self.preceding_vars = {}
         self.target_vars = {}
