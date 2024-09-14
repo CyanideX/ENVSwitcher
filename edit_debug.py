@@ -17,7 +17,12 @@ class EditDebugApp:
         right_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         self.right_header = tk.Label(right_frame, text="Edit Global Properties")
-        self.right_header.pack(pady=(0, 25))
+        self.right_header.pack(pady=(0, 10))
+
+        warning_frame = tk.Frame(right_frame, bg="red")
+        warning_frame.pack(fill=tk.X, padx=10, pady=(0, 15))
+        warning_label = tk.Label(warning_frame, text="Warning: this will override all state values!", bg="red", fg="white")
+        warning_label.pack(pady=5)
 
         self.entries = {}
         self.create_entries(right_frame)
