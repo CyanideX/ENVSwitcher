@@ -167,20 +167,11 @@ class WeatherApp:
                                 'Elements': [
                                     {
                                         'Point': 12,
-                                        'Value': 2
+                                        'Value': 1.5
                                     }
                                 ]
                             },
-                            'minDuration': {
-                                'InterpolationType': "Linear",
-                                'LinkType': "ESLT_Normal",
-                                'Elements': [
-                                    {
-                                        'Point': 12,
-                                        'Value': 1
-                                    }
-                                ]
-                            },
+                            'minDuration': None,
                             'name': {
                                 '$type': 'CName',
                                 '$storage': 'string',
@@ -192,7 +183,7 @@ class WeatherApp:
                                 'Elements': [
                                     {
                                         'Point': 12,
-                                        'Value': 0.899999976
+                                        'Value': 0.0500000007
                                     }
                                 ]
                             },
