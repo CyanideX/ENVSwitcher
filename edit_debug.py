@@ -69,28 +69,30 @@ class EditDebugApp:
             messagebox.showerror("Error", f"Failed to save JSON file: {e}")
 
     def save_changes(self):
-        def update_field(field_name, entry_name):
-            value = self.get_entry_value(self.entries[entry_name])
-            for state in self.data['Data']['RootChunk']['weatherStates']:
-                if value is None:
-                    state['Data'][field_name] = None
-                else:
-                    state['Data'][field_name] = {
-                        "InterpolationType": "Linear",
-                        "LinkType": "ESLT_Normal",
-                        "Elements": [{"Point": 12, "Value": value}]
-                    }
+        for state in self.data['Data']['RootChunk']['weatherStates']:
+            state_data = state['Data']
 
-        update_field('minDuration', 'Min Duration')
-        update_field('maxDuration', 'Max Duration')
-        update_field('probability', 'Probability')
-        update_field('transitionDuration', 'Transition Duration')
+            self.update_field(state_data, 'minDuration', self.entries["Min Duration"])
+            self.update_field(state_data, 'maxDuration', self.entries["Max Duration"])
+            self.update_field(state_data, 'probability', self.entries["Probability"])
+            self.update_field(state_data, 'transitionDuration', self.entries["Transition Duration"])
 
         self.save_json(self.env_file_path)
 
         # Show confirmation message
         self.confirm_label.config(text="Changes saved successfully!")
         self.root.after(3000, self.clear_confirmation)
+
+    def update_field(self, state_data, field_name, entry):
+        value = self.get_entry_value(entry)
+        if value is None:
+            state_data[field_name] = None
+        else:
+            state_data[field_name] = {
+                "InterpolationType": "Linear",
+                "LinkType": "ESLT_Normal",
+                "Elements": [{"Point": 12, "Value": value}]
+            }
 
     def clear_confirmation(self):
         self.confirm_label.config(text="")
