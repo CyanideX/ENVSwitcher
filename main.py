@@ -37,10 +37,10 @@ class WeatherApp:
         button_frame = tk.Frame(root)
         button_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=(50, 25))
 
-        self.targets_button = tk.Button(button_frame, text="Transitions", command=self.open_edit_targets, width=button_width)
+        self.targets_button = tk.Button(button_frame, text="Transitions", command=self.open_transitions, width=button_width)
         self.targets_button.pack(pady=5)
 
-        self.properties_button = tk.Button(button_frame, text="Properties", command=self.open_edit_properties, width=button_width)
+        self.properties_button = tk.Button(button_frame, text="Properties", command=self.open_properties, width=button_width)
         self.properties_button.pack(pady=5)
 
         # Create a frame for the add and remove buttons
@@ -59,7 +59,7 @@ class WeatherApp:
         self.reload_button = tk.Button(button_frame, text="Reload JSON", command=self.reload_json, width=button_width)
         self.reload_button.pack(side=tk.BOTTOM, pady=10)
 
-        self.debug_button = tk.Button(button_frame, text="Debug", command=self.open_edit_debug, width=button_width)
+        self.debug_button = tk.Button(button_frame, text="Debug", command=self.open_global_properties, width=button_width)
         self.debug_button.pack(side=tk.BOTTOM, pady=5)
 
         self.env_file_path = self.get_env_file_path()
@@ -340,14 +340,14 @@ class WeatherApp:
                 if name not in existing_names:
                     self.left_listbox.insert(tk.END, name)
 
-    def open_edit_targets(self):
-        subprocess.Popen(['python', 'edit_targets.py'])
+    def open_transitions(self):
+        subprocess.Popen(['python', 'transitions.py'])
 
-    def open_edit_properties(self):
-        subprocess.Popen(['python', 'edit_properties.py'])
+    def open_properties(self):
+        subprocess.Popen(['python', 'properties.py'])
 
-    def open_edit_debug(self):
-        subprocess.Popen(['python', 'edit_debug.py'])
+    def open_global_properties(self):
+        subprocess.Popen(['python', 'global_properties.py'])
 
     def on_closing(self):
         self.stop_watching = True
