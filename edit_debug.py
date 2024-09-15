@@ -8,7 +8,7 @@ class EditDebugApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Debug")
-        self.root.minsize(300, 150)
+        self.root.minsize(350, 150)
 
         self.env_file_path = self.get_env_file_path()
         self.data = self.load_json(self.env_file_path)
@@ -21,8 +21,12 @@ class EditDebugApp:
 
         warning_frame = tk.Frame(right_frame, bg="red")
         warning_frame.pack(fill=tk.X, padx=10, pady=(0, 15))
-        warning_label = tk.Label(warning_frame, text="Warning: this will override all state values!", bg="red", fg="white")
-        warning_label.pack(pady=5)
+        warning_label = tk.Label(warning_frame, text="Warning: this will override all state values!", bg="red", fg="white", font=("Segoe UI", 10, "bold"))
+        warning_label.pack(padx=15, pady=5)
+
+        # Add the new text box below the warning box
+        info_label = tk.Label(right_frame, text="Leave fields blank to save as 'null'.", fg="black")
+        info_label.pack(pady=(0, 15))
 
         self.entries = {}
         self.create_entries(right_frame)
