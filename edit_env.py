@@ -79,7 +79,7 @@ class WeatherApp:
         ]
 
     def save_states(self):
-        if messagebox.askyesno("Confirm Save", "Are you sure you want to save the changes?"):
+        if messagebox.askyesno("Confirm Save", "Are you sure you want to save the changes? All weather state transitions will be removed."):
             existing_names = {state['Data']['name']['$value'] for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', [])}
             for index in range(self.right_listbox.size()):
                 file_name = self.right_listbox.get(index)
@@ -146,6 +146,9 @@ class WeatherApp:
 
             self.ensure_unique_handle_ids()
             self.save_json(self.env_file_path)
+
+    def remove_all_transitions(self):
+        self.data['Data']['RootChunk']['weatherStateTransitions'] = []
 
     def ensure_unique_handle_ids(self):
         handle_id = 0
@@ -220,6 +223,7 @@ class WeatherApp:
             if file_name not in self.right_listbox.get(0, tk.END):
                 self.right_listbox.insert(tk.END, file_name)
                 self.left_listbox.delete(index)
+        self.remove_all_transitions()
 
     def remove_states(self):
         selected = self.right_listbox.curselection()
@@ -228,13 +232,13 @@ class WeatherApp:
             if file_name not in self.left_listbox.get(0, tk.END):
                 self.left_listbox.insert(tk.END, file_name)
                 self.right_listbox.delete(index)
-                # Find and remove the corresponding weather state and transitions
+                # Find and remove the corresponding weather state
                 for state in self.data['Data']['RootChunk']['weatherStates']:
                     if state['Data']['name']['$value'] == file_name:
                         handle_id = state['HandleId']
                         self.data['Data']['RootChunk']['weatherStates'].remove(state)
-                        self.remove_transitions(handle_id)
                         break
+        self.remove_all_transitions()
     
     def get_env_file_path(self):
         if os.path.exists('env_file_path.txt'):
