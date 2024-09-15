@@ -45,10 +45,10 @@ class WeatherApp:
         move_button_frame = tk.Frame(button_frame)
         move_button_frame.pack(pady=5)
 
-        self.remove_button = tk.Button(move_button_frame, text="<<<", command=self.remove_entries, width=button_width_arrows)
+        self.remove_button = tk.Button(move_button_frame, text="<<<", command=self.remove_states, width=button_width_arrows)
         self.remove_button.pack(side=tk.LEFT, padx=5)
 
-        self.add_button = tk.Button(move_button_frame, text=">>>", command=self.move_entries, width=button_width_arrows)
+        self.add_button = tk.Button(move_button_frame, text=">>>", command=self.add_states, width=button_width_arrows)
         self.add_button.pack(side=tk.LEFT, padx=5)
 
         self.save_button = tk.Button(button_frame, text="Save", command=self.save_states, width=button_width)
@@ -69,73 +69,6 @@ class WeatherApp:
         self.stop_watching = False
         self.file_watcher_thread = threading.Thread(target=self.watch_file)
         self.file_watcher_thread.start()
-
-    def get_env_file_path(self):
-        if os.path.exists('env_file_path.txt'):
-            with open('env_file_path.txt', 'r') as file:
-                return file.read().strip()
-        else:
-            file_path = filedialog.askopenfilename(title="Select main env.json file", filetypes=(("JSON files", "*.json"), ("all files", "*.*")))
-            with open('env_file_path.txt', 'w') as file:
-                file.write(file_path)
-            return file_path
-
-    def get_folder_path_from_env_file(self):
-        env_file_path = self.env_file_path.replace('/', '\\')
-        folder_path = os.path.dirname(env_file_path).replace('raw', 'archive')
-        return folder_path
-
-    def load_json(self, file_path):
-        try:
-            with open(file_path, 'r') as file:
-                return json.load(file)
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load JSON file: {e}")
-            return {}
-
-    def save_json(self, file_path):
-        try:
-            with open(file_path, 'w') as file:
-                json.dump(self.data, file, indent=4)
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to save JSON file: {e}")
-
-    def populate_right_listbox(self):
-        self.right_listbox.delete(0, tk.END)
-        for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
-            self.right_listbox.insert(tk.END, state['Data']['name']['$value'])
-
-    def populate_left_listbox(self, folder_path):
-        self.left_listbox.delete(0, tk.END)
-        existing_names = {state['Data']['name']['$value'] for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', [])}
-        for file_name in os.listdir(folder_path):
-            if file_name.endswith('.envparam'):
-                name = file_name.replace('.envparam', '')
-                if name not in existing_names:
-                    self.left_listbox.insert(tk.END, name)
-
-    def move_entries(self):
-        selected = self.left_listbox.curselection()
-        for index in selected:
-            file_name = self.left_listbox.get(index)
-            if file_name not in self.right_listbox.get(0, tk.END):
-                self.right_listbox.insert(tk.END, file_name)
-                self.left_listbox.delete(index)
-
-    def remove_entries(self):
-        selected = self.right_listbox.curselection()
-        for index in selected:
-            file_name = self.right_listbox.get(index)
-            if file_name not in self.left_listbox.get(0, tk.END):
-                self.left_listbox.insert(tk.END, file_name)
-                self.right_listbox.delete(index)
-                # Find and remove the corresponding weather state and transitions
-                for state in self.data['Data']['RootChunk']['weatherStates']:
-                    if state['Data']['name']['$value'] == file_name:
-                        handle_id = state['HandleId']
-                        self.data['Data']['RootChunk']['weatherStates'].remove(state)
-                        self.remove_transitions(handle_id)
-                        break
     
     def remove_transitions(self, handle_id):
         transitions = self.data['Data']['RootChunk']['weatherStateTransitions']
@@ -279,6 +212,59 @@ class WeatherApp:
                 area['Data']['mode']['HandleId'] = str(handle_id)
                 handle_id_map[area['Data']['mode']['HandleId']] = handle_id
                 handle_id += 1
+    
+    def add_states(self):
+        selected = self.left_listbox.curselection()
+        for index in selected:
+            file_name = self.left_listbox.get(index)
+            if file_name not in self.right_listbox.get(0, tk.END):
+                self.right_listbox.insert(tk.END, file_name)
+                self.left_listbox.delete(index)
+
+    def remove_states(self):
+        selected = self.right_listbox.curselection()
+        for index in selected:
+            file_name = self.right_listbox.get(index)
+            if file_name not in self.left_listbox.get(0, tk.END):
+                self.left_listbox.insert(tk.END, file_name)
+                self.right_listbox.delete(index)
+                # Find and remove the corresponding weather state and transitions
+                for state in self.data['Data']['RootChunk']['weatherStates']:
+                    if state['Data']['name']['$value'] == file_name:
+                        handle_id = state['HandleId']
+                        self.data['Data']['RootChunk']['weatherStates'].remove(state)
+                        self.remove_transitions(handle_id)
+                        break
+    
+    def get_env_file_path(self):
+        if os.path.exists('env_file_path.txt'):
+            with open('env_file_path.txt', 'r') as file:
+                return file.read().strip()
+        else:
+            file_path = filedialog.askopenfilename(title="Select main env.json file", filetypes=(("JSON files", "*.json"), ("all files", "*.*")))
+            with open('env_file_path.txt', 'w') as file:
+                file.write(file_path)
+            return file_path
+
+    def get_folder_path_from_env_file(self):
+        env_file_path = self.env_file_path.replace('/', '\\')
+        folder_path = os.path.dirname(env_file_path).replace('raw', 'archive')
+        return folder_path
+
+    def load_json(self, file_path):
+        try:
+            with open(file_path, 'r') as file:
+                return json.load(file)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load JSON file: {e}")
+            return {}
+
+    def save_json(self, file_path):
+        try:
+            with open(file_path, 'w') as file:
+                json.dump(self.data, file, indent=4)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save JSON file: {e}")
 
     def reload_json(self):
         self.data = self.load_json(self.env_file_path)
@@ -293,6 +279,20 @@ class WeatherApp:
             if current_modified_time != last_modified_time:
                 last_modified_time = current_modified_time
                 self.reload_json()
+
+    def populate_right_listbox(self):
+        self.right_listbox.delete(0, tk.END)
+        for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
+            self.right_listbox.insert(tk.END, state['Data']['name']['$value'])
+
+    def populate_left_listbox(self, folder_path):
+        self.left_listbox.delete(0, tk.END)
+        existing_names = {state['Data']['name']['$value'] for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', [])}
+        for file_name in os.listdir(folder_path):
+            if file_name.endswith('.envparam'):
+                name = file_name.replace('.envparam', '')
+                if name not in existing_names:
+                    self.left_listbox.insert(tk.END, name)
 
     def open_edit_targets(self):
         subprocess.Popen(['python', 'edit_targets.py'])
