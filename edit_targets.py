@@ -3,6 +3,8 @@ from tkinter import messagebox
 from tkinter import ttk
 import json
 import os
+import threading
+import time
 
 class EditTransitionsApp:
     def __init__(self, root):
@@ -111,6 +113,10 @@ class EditTransitionsApp:
         left_inner_frame.bind("<Configure>", lambda e: left_canvas.configure(scrollregion=left_canvas.bbox("all")))
         right_inner_frame.bind("<Configure>", lambda e: right_canvas.configure(scrollregion=right_canvas.bbox("all")))
 
+        self.watch_thread = threading.Thread(target=self.watch_file)
+        self.watch_thread.daemon = True
+        self.watch_thread.start()
+
     def _bind_mousewheel(self, event, canvas):
         canvas.bind_all("<MouseWheel>", lambda e: self._on_mousewheel(e, canvas))
 
@@ -142,6 +148,26 @@ class EditTransitionsApp:
                 json.dump(self.data, file, indent=4)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save JSON file: {e}")
+
+    def watch_file(self):
+        last_modified_time = os.path.getmtime(self.env_file_path)
+        self.stop_watching = False
+        while not self.stop_watching:
+            time.sleep(1)
+            current_modified_time = os.path.getmtime(self.env_file_path)
+            if current_modified_time != last_modified_time:
+                last_modified_time = current_modified_time
+                self.reload_json()
+
+    def reload_json(self):
+        self.data = self.load_json(self.env_file_path)
+        self.update_ui()
+
+    def update_ui(self):
+        self.left_listbox.delete(0, tk.END)
+        for state in self.data['Data']['RootChunk']['weatherStates']:
+            self.left_listbox.insert(tk.END, state['Data']['name']['$value'])
+        self.current_transitions = self.load_current_transitions()
 
     def load_current_transitions(self):
         transitions = {}
@@ -344,7 +370,13 @@ class EditTransitionsApp:
                 handle_id_map[area['Data']['mode']['HandleId']] = handle_id
                 handle_id += 1
 
+    def on_closing(self):
+        self.stop_watching = True
+        self.watch_thread.join()
+        self.root.destroy()
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = EditTransitionsApp(root)
+    root.protocol("WM_DELETE_WINDOW", app.on_closing)
     root.mainloop()
