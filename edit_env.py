@@ -88,6 +88,8 @@ class WeatherApp:
                 self.tooltip.geometry(f"+{event.x_root + 10}+{event.y_root + 10}")
                 label = Label(self.tooltip, text=f"Handle ID: {handle_id}", background="white", relief="solid", borderwidth=1)
                 label.pack()
+                 # Schedule the tooltip to be destroyed after 3 seconds
+                self.tooltip.after(3000, self.tooltip.destroy)
 
     def get_handle_id_by_name(self, name):
         for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):

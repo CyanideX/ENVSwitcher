@@ -136,6 +136,8 @@ class EditTransitionsApp:
             handle_id = self.get_handle_id_by_name(state_name)
             if handle_id:
                 self.create_tooltip(event, handle_id)
+                 # Schedule the tooltip to be destroyed after 3 seconds
+                self.tooltip.after(3000, self.tooltip.destroy)
 
     def create_tooltip(self, event, handle_id):
         if self.tooltip:
