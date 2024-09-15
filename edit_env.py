@@ -16,10 +16,10 @@ class WeatherApp:
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Add headers
-        self.left_header = tk.Label(left_frame, text="Inactive States")
+        self.left_header = tk.Label(left_frame, text="Disabled States")
         self.left_header.pack()
 
-        self.right_header = tk.Label(right_frame, text="Active States")
+        self.right_header = tk.Label(right_frame, text="Enabled States")
         self.right_header.pack()
 
         self.left_listbox = tk.Listbox(left_frame)
@@ -51,7 +51,7 @@ class WeatherApp:
         self.add_button = tk.Button(move_button_frame, text=">>>", command=self.move_entries, width=button_width_arrows)
         self.add_button.pack(side=tk.LEFT, padx=5)
 
-        self.save_button = tk.Button(button_frame, text="Save", command=self.confirm_additions, width=button_width)
+        self.save_button = tk.Button(button_frame, text="Save", command=self.save_states, width=button_width)
         self.save_button.pack(pady=5)
 
         self.reload_button = tk.Button(button_frame, text="Reload JSON", command=self.reload_json, width=button_width)
@@ -145,7 +145,7 @@ class WeatherApp:
             transition['Data']['targetWeatherState']['HandleRefId'] != handle_id
         ]
 
-    def confirm_additions(self):
+    def save_states(self):
         if messagebox.askyesno("Confirm Save", "Are you sure you want to save the changes?"):
             existing_names = {state['Data']['name']['$value'] for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', [])}
             for index in range(self.right_listbox.size()):
