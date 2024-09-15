@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, Toplevel, Label
 from tkinter import ttk
 import json
 import os
@@ -60,6 +60,7 @@ class EditTransitionsApp:
 
         self.left_listbox = tk.Listbox(middle_frame)
         self.left_listbox.pack(fill=tk.BOTH, expand=True, pady=0)
+        self.left_listbox.bind("<Motion>", self.show_tooltip)
 
         self.preceding_vars = {}
         self.target_vars = {}
@@ -90,12 +91,14 @@ class EditTransitionsApp:
             var = tk.BooleanVar()
             chk = ttk.Checkbutton(left_inner_frame, text=state['Data']['name']['$value'], variable=var, command=self.on_checkbox_select)
             chk.pack(anchor='w', padx=10, pady=0)
+            chk.bind("<Motion>", self.show_tooltip)
             self.preceding_vars[state['Data']['name']['$value']] = var
 
         for state in self.data['Data']['RootChunk']['weatherStates']:
             var = tk.BooleanVar()
             chk = ttk.Checkbutton(right_inner_frame, text=state['Data']['name']['$value'], variable=var, command=self.on_checkbox_select)
             chk.pack(anchor='w', padx=10, pady=0)
+            chk.bind("<Motion>", self.show_tooltip)
             self.target_vars[state['Data']['name']['$value']] = var
 
         for state in self.data['Data']['RootChunk']['weatherStates']:
@@ -116,6 +119,38 @@ class EditTransitionsApp:
         self.watch_thread = threading.Thread(target=self.watch_file)
         self.watch_thread.daemon = True
         self.watch_thread.start()
+
+        self.tooltip = None
+
+    def show_tooltip(self, event):
+        widget = event.widget
+        if isinstance(widget, tk.Listbox):
+            index = widget.nearest(event.y)
+            if index != -1:
+                state_name = widget.get(index)
+                handle_id = self.get_handle_id_by_name(state_name)
+                if handle_id:
+                    self.create_tooltip(event, handle_id)
+        elif isinstance(widget, ttk.Checkbutton):
+            state_name = widget.cget("text")
+            handle_id = self.get_handle_id_by_name(state_name)
+            if handle_id:
+                self.create_tooltip(event, handle_id)
+
+    def create_tooltip(self, event, handle_id):
+        if self.tooltip:
+            self.tooltip.destroy()
+        self.tooltip = Toplevel(self.root)
+        self.tooltip.wm_overrideredirect(True)
+        self.tooltip.geometry(f"+{event.x_root + 20}+{event.y_root + 10}")
+        label = Label(self.tooltip, text=f"Handle ID: {handle_id}", background="white", relief="solid", borderwidth=1)
+        label.pack()
+
+    def get_handle_id_by_name(self, name):
+        for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
+            if state['Data']['name']['$value'] == name:
+                return state['HandleId']
+        return None
 
     def _bind_mousewheel(self, event, canvas):
         canvas.bind_all("<MouseWheel>", lambda e: self._on_mousewheel(e, canvas))

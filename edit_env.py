@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, Toplevel, Label
 import json, os, subprocess, threading, time
 
 class WeatherApp:
@@ -24,9 +24,11 @@ class WeatherApp:
 
         self.left_listbox = tk.Listbox(left_frame)
         self.left_listbox.pack(fill=tk.BOTH, expand=True, pady=10)
+        self.left_listbox.bind("<Motion>", self.show_tooltip)
 
         self.right_listbox = tk.Listbox(right_frame)
         self.right_listbox.pack(fill=tk.BOTH, expand=True, pady=10)
+        self.right_listbox.bind("<Motion>", self.show_tooltip)
 
         button_width = 15
         button_width_arrows = 6
@@ -69,6 +71,29 @@ class WeatherApp:
         self.stop_watching = False
         self.file_watcher_thread = threading.Thread(target=self.watch_file)
         self.file_watcher_thread.start()
+
+        self.tooltip = None
+    
+    def show_tooltip(self, event):
+        widget = event.widget
+        index = widget.nearest(event.y)
+        if index != -1:
+            state_name = widget.get(index)
+            handle_id = self.get_handle_id_by_name(state_name)
+            if handle_id:
+                if self.tooltip:
+                    self.tooltip.destroy()
+                self.tooltip = Toplevel(self.root)
+                self.tooltip.wm_overrideredirect(True)
+                self.tooltip.geometry(f"+{event.x_root + 10}+{event.y_root + 10}")
+                label = Label(self.tooltip, text=f"Handle ID: {handle_id}", background="white", relief="solid", borderwidth=1)
+                label.pack()
+
+    def get_handle_id_by_name(self, name):
+        for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
+            if state['Data']['name']['$value'] == name:
+                return state['HandleId']
+        return None
     
     def remove_transitions(self, handle_id):
         transitions = self.data['Data']['RootChunk']['weatherStateTransitions']
