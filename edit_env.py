@@ -79,7 +79,7 @@ class WeatherApp:
         ]
 
     def save_states(self):
-        if messagebox.askyesno("Confirm Save", "Are you sure you want to save the changes? All weather state transitions will be removed."):
+        if messagebox.askyesno("Confirm Save", "Are you sure you want to save the changes?"):
             existing_names = {state['Data']['name']['$value'] for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', [])}
             for index in range(self.right_listbox.size()):
                 file_name = self.right_listbox.get(index)
@@ -146,9 +146,24 @@ class WeatherApp:
 
             self.ensure_unique_handle_ids()
             self.save_json(self.env_file_path)
+    
+    def update_handle_ids_after_removal(self, removed_handle_id):
+        removed_handle_id = int(removed_handle_id)
+        for state in self.data['Data']['RootChunk']['weatherStates']:
+            handle_id = int(state['HandleId'])
+            if handle_id > removed_handle_id:
+                state['HandleId'] = str(handle_id - 1)
 
-    def remove_all_transitions(self):
-        self.data['Data']['RootChunk']['weatherStateTransitions'] = []
+        for transition in self.data['Data']['RootChunk']['weatherStateTransitions']:
+            handle_id = int(transition['HandleId'])
+            if handle_id > removed_handle_id:
+                transition['HandleId'] = str(handle_id - 1)
+            source_id = int(transition['Data']['sourceWeatherState']['HandleRefId'])
+            target_id = int(transition['Data']['targetWeatherState']['HandleRefId'])
+            if source_id > removed_handle_id:
+                transition['Data']['sourceWeatherState']['HandleRefId'] = str(source_id - 1)
+            if target_id > removed_handle_id:
+                transition['Data']['targetWeatherState']['HandleRefId'] = str(target_id - 1)
 
     def ensure_unique_handle_ids(self):
         handle_id = 0
@@ -223,7 +238,6 @@ class WeatherApp:
             if file_name not in self.right_listbox.get(0, tk.END):
                 self.right_listbox.insert(tk.END, file_name)
                 self.left_listbox.delete(index)
-        self.remove_all_transitions()
 
     def remove_states(self):
         selected = self.right_listbox.curselection()
@@ -232,13 +246,14 @@ class WeatherApp:
             if file_name not in self.left_listbox.get(0, tk.END):
                 self.left_listbox.insert(tk.END, file_name)
                 self.right_listbox.delete(index)
-                # Find and remove the corresponding weather state
+                # Find and remove the corresponding weather state and transitions
                 for state in self.data['Data']['RootChunk']['weatherStates']:
                     if state['Data']['name']['$value'] == file_name:
                         handle_id = state['HandleId']
                         self.data['Data']['RootChunk']['weatherStates'].remove(state)
+                        self.remove_transitions(handle_id)
+                        self.update_handle_ids_after_removal(handle_id)
                         break
-        self.remove_all_transitions()
     
     def get_env_file_path(self):
         if os.path.exists('env_file_path.txt'):
