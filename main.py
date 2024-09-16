@@ -10,14 +10,12 @@ class WeatherApp:
         self.root.title("Weather State Manager")
         self.root.minsize(550, 380)
 
-        # Create frames for the headers and listboxes
         left_frame = tk.Frame(root)
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         right_frame = tk.Frame(root)
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Add headers
         self.left_header = tk.Label(left_frame, text="Disabled States")
         self.left_header.pack()
 
@@ -35,7 +33,6 @@ class WeatherApp:
         button_width = 15
         button_width_arrows = 6
 
-        # Create a frame to contain the buttons
         button_frame = tk.Frame(root)
         button_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=(50, 25))
 
@@ -45,7 +42,6 @@ class WeatherApp:
         self.properties_button = tk.Button(button_frame, text="Properties", command=self.open_properties, width=button_width)
         self.properties_button.pack(pady=5)
 
-        # Create a frame for the add and remove buttons
         move_button_frame = tk.Frame(button_frame)
         move_button_frame.pack(pady=5)
 
@@ -72,13 +68,12 @@ class WeatherApp:
         self.populate_right_listbox()
         self.populate_left_listbox(self.get_folder_path_from_env_file())
 
-        # Start the file watcher thread
         self.stop_watching = False
         self.file_watcher_thread = threading.Thread(target=self.watch_file)
         self.file_watcher_thread.start()
 
         self.tooltip = None
-        self.tooltips_enabled = False  # Tooltips disabled by default
+        self.tooltips_enabled = False
     
     def show_tooltip(self, event):
         if not self.tooltips_enabled:
@@ -96,7 +91,6 @@ class WeatherApp:
                 self.tooltip.geometry(f"+{event.x_root + 10}+{event.y_root + 10}")
                 label = Label(self.tooltip, text=f"Handle ID: {handle_id}", background="white", relief="solid", borderwidth=1)
                 label.pack()
-                # Schedule the tooltip to be destroyed after 3 seconds
                 self.tooltip.after(3000, self.tooltip.destroy)
 
     def toggle_tooltips(self):
@@ -259,7 +253,6 @@ class WeatherApp:
             handle_id_map[area['HandleId']] = handle_id
             handle_id += 1
 
-            # Update HandleIds for hdrMode and mode
             if 'hdrMode' in area['Data']:
                 area['Data']['hdrMode']['HandleId'] = str(handle_id)
                 handle_id_map[area['Data']['hdrMode']['HandleId']] = handle_id
@@ -344,7 +337,7 @@ class WeatherApp:
             with open(exclusion_file_path, 'r') as file:
                 return json.load(file).get('exclusionList', [])
         return []
-        
+
     def populate_right_listbox(self):
         self.right_listbox.delete(0, tk.END)
         for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
@@ -352,7 +345,7 @@ class WeatherApp:
             self.right_listbox.insert(tk.END, name)
             if name in self.exclusion_list:
                 self.right_listbox.itemconfig(tk.END, {'fg': 'grey'})
-                self.right_listbox.itemconfig(tk.END, {'selectbackground': 'grey'})
+                self.right_listbox.itemconfig(tk.END, {'selectbackground': 'white'})
                 self.right_listbox.itemconfig(tk.END, {'selectforeground': 'grey'})
                 self.right_listbox.bind("<Button-1>", self.disable_click)
 
