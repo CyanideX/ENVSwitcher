@@ -68,8 +68,7 @@ class WeatherApp:
 
         self.env_file_path = self.get_env_file_path()
         self.data = self.load_json(self.env_file_path)
-        self.populate_right_listbox()
-        self.populate_left_listbox(self.get_folder_path_from_env_file())
+        self.populate_listboxes(self.get_folder_path_from_env_file())
 
         self.stop_watching = False
         self.file_watcher_thread = threading.Thread(target=self.watch_file)
@@ -294,14 +293,13 @@ class WeatherApp:
         if os.path.exists('env_file_path.txt'):
             with open('env_file_path.txt', 'r') as file:
                 return file.read().strip()
-        else:
-            file_path = filedialog.askopenfilename(title="Select main env.json file", filetypes=(("JSON files", "*.json"), ("all files", "*.*")))
-            with open('env_file_path.txt', 'w') as file:
-                file.write(file_path)
-            return file_path
+        file_path = filedialog.askopenfilename(title="Select main env.json file", filetypes=(("JSON files", "*.json"), ("all files", "*.*")))
+        with open('env_file_path.txt', 'w') as file:
+            file.write(file_path)
+        return file_path
 
     def get_folder_path_from_env_file(self):
-        env_file_path = self.env_file_path.replace('/', '\\')
+        env_file_path = os.path.normpath(self.env_file_path)
         folder_path = os.path.dirname(env_file_path).replace('raw', 'archive')
         return folder_path
 
@@ -322,8 +320,7 @@ class WeatherApp:
 
     def reload_json(self):
         self.data = self.load_json(self.env_file_path)
-        self.populate_right_listbox()
-        self.populate_left_listbox(self.get_folder_path_from_env_file())
+        self.populate_listboxes(self.get_folder_path_from_env_file())
 
     def watch_file(self):
         last_modified_time = os.path.getmtime(self.env_file_path)
@@ -333,24 +330,6 @@ class WeatherApp:
             if current_modified_time != last_modified_time:
                 last_modified_time = current_modified_time
                 self.reload_json()
-    
-    def load_exclusion_list(self):
-        exclusion_file_path = 'weather_exclusion_list.json'
-        if os.path.exists(exclusion_file_path):
-            with open(exclusion_file_path, 'r') as file:
-                return json.load(file).get('exclusionList', [])
-        return []
-
-    def populate_right_listbox(self):
-        self.right_listbox.delete(0, tk.END)
-        for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
-            name = state['Data']['name']['$value']
-            self.right_listbox.insert(tk.END, name)
-            if name in self.exclusion_list:
-                self.right_listbox.itemconfig(tk.END, {'fg': 'grey'})
-                self.right_listbox.itemconfig(tk.END, {'selectbackground': 'white'})
-                self.right_listbox.itemconfig(tk.END, {'selectforeground': 'grey'})
-                self.right_listbox.bind("<Button-1>", self.disable_click)
 
     def disable_click(self, event):
         widget = event.widget
@@ -358,13 +337,23 @@ class WeatherApp:
         if widget.get(index) in self.exclusion_list:
             return "break"
 
-    def populate_left_listbox(self, folder_path):
+    def populate_listboxes(self, folder_path):
+        self.right_listbox.delete(0, tk.END)
         self.left_listbox.delete(0, tk.END)
         existing_names = {state['Data']['name']['$value'] for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', [])}
+        exclusion_set = set(self.exclusion_list)
+
+        for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
+            name = state['Data']['name']['$value']
+            self.right_listbox.insert(tk.END, name)
+            if name in exclusion_set:
+                self.right_listbox.itemconfig(tk.END, {'fg': 'grey', 'selectbackground': 'white', 'selectforeground': 'grey'})
+                self.right_listbox.bind("<Button-1>", self.disable_click)
+
         for file_name in os.listdir(folder_path):
             if file_name.endswith('.envparam'):
                 name = file_name.replace('.envparam', '')
-                if name not in existing_names and name not in self.exclusion_list:
+                if name not in existing_names and name not in exclusion_set:
                     self.left_listbox.insert(tk.END, name)
 
     def open_transitions(self):
