@@ -4,9 +4,7 @@ import json, os, subprocess, threading, time
 
 class WeatherApp:
     def __init__(self, root):
-
-        # Load exclusion list
-        self.exclusion_list = self.load_exclusion_list()
+        self.exclusion_list = ["24h_weather_sunny", "24h_weather_rain", "24h_weather_fog", "24h_weather_pollution", "24h_weather_toxic_rain", "24h_weather_sandstorm", "24h_weather_light_clouds", "24h_weather_cloudy", "24h_weather_heavy_clouds", "q302_squat_morning", "q302_deeb_blue", "sa_courier_clouds", "q306_epilogue_cloudy_morning", "q306_rainy_night", "q302_light_rain"]
 
         self.root = root
         self.root.title("Weather State Manager")
@@ -346,7 +344,7 @@ class WeatherApp:
             with open(exclusion_file_path, 'r') as file:
                 return json.load(file).get('exclusionList', [])
         return []
-
+        
     def populate_right_listbox(self):
         self.right_listbox.delete(0, tk.END)
         for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
