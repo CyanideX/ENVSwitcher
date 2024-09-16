@@ -4,6 +4,10 @@ import json, os, subprocess, threading, time
 
 class WeatherApp:
     def __init__(self, root):
+
+        # Load exclusion list
+        self.exclusion_list = self.load_exclusion_list()
+
         self.root = root
         self.root.title("Weather State Manager")
         self.root.minsize(550, 380)
@@ -57,7 +61,10 @@ class WeatherApp:
         self.save_button.pack(pady=5)
 
         self.reload_button = tk.Button(button_frame, text="Reload JSON", command=self.reload_json, width=button_width)
-        self.reload_button.pack(side=tk.BOTTOM, pady=10)
+        self.reload_button.pack(side=tk.BOTTOM, pady=5)
+
+        self.toggle_tooltips_button = tk.Button(button_frame, text="Enable Tooltips", command=self.toggle_tooltips, width=button_width)
+        self.toggle_tooltips_button.pack(side=tk.BOTTOM, pady=5)
 
         self.debug_button = tk.Button(button_frame, text="Debug", command=self.open_global_properties, width=button_width)
         self.debug_button.pack(side=tk.BOTTOM, pady=5)
@@ -73,8 +80,11 @@ class WeatherApp:
         self.file_watcher_thread.start()
 
         self.tooltip = None
+        self.tooltips_enabled = False  # Tooltips disabled by default
     
     def show_tooltip(self, event):
+        if not self.tooltips_enabled:
+            return
         widget = event.widget
         index = widget.nearest(event.y)
         if index != -1:
@@ -88,8 +98,12 @@ class WeatherApp:
                 self.tooltip.geometry(f"+{event.x_root + 10}+{event.y_root + 10}")
                 label = Label(self.tooltip, text=f"Handle ID: {handle_id}", background="white", relief="solid", borderwidth=1)
                 label.pack()
-                 # Schedule the tooltip to be destroyed after 3 seconds
+                # Schedule the tooltip to be destroyed after 3 seconds
                 self.tooltip.after(3000, self.tooltip.destroy)
+
+    def toggle_tooltips(self):
+        self.tooltips_enabled = not self.tooltips_enabled
+        self.toggle_tooltips_button.config(text="Enable Tooltips" if not self.tooltips_enabled else "Disable Tooltips")
 
     def get_handle_id_by_name(self, name):
         for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
@@ -262,7 +276,7 @@ class WeatherApp:
         selected = self.left_listbox.curselection()
         for index in selected:
             file_name = self.left_listbox.get(index)
-            if file_name not in self.right_listbox.get(0, tk.END):
+            if file_name not in self.right_listbox.get(0, tk.END) and file_name not in self.exclusion_list:
                 self.right_listbox.insert(tk.END, file_name)
                 self.left_listbox.delete(index)
 
@@ -270,7 +284,7 @@ class WeatherApp:
         selected = self.right_listbox.curselection()
         for index in selected:
             file_name = self.right_listbox.get(index)
-            if file_name not in self.left_listbox.get(0, tk.END):
+            if file_name not in self.left_listbox.get(0, tk.END) and file_name not in self.exclusion_list:
                 self.left_listbox.insert(tk.END, file_name)
                 self.right_listbox.delete(index)
                 # Find and remove the corresponding weather state and transitions
@@ -325,11 +339,30 @@ class WeatherApp:
             if current_modified_time != last_modified_time:
                 last_modified_time = current_modified_time
                 self.reload_json()
+    
+    def load_exclusion_list(self):
+        exclusion_file_path = 'weather_exclusion_list.json'
+        if os.path.exists(exclusion_file_path):
+            with open(exclusion_file_path, 'r') as file:
+                return json.load(file).get('exclusionList', [])
+        return []
 
     def populate_right_listbox(self):
         self.right_listbox.delete(0, tk.END)
         for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
-            self.right_listbox.insert(tk.END, state['Data']['name']['$value'])
+            name = state['Data']['name']['$value']
+            self.right_listbox.insert(tk.END, name)
+            if name in self.exclusion_list:
+                self.right_listbox.itemconfig(tk.END, {'fg': 'grey'})
+                self.right_listbox.itemconfig(tk.END, {'selectbackground': 'grey'})
+                self.right_listbox.itemconfig(tk.END, {'selectforeground': 'grey'})
+                self.right_listbox.bind("<Button-1>", self.disable_click)
+
+    def disable_click(self, event):
+        widget = event.widget
+        index = widget.nearest(event.y)
+        if widget.get(index) in self.exclusion_list:
+            return "break"
 
     def populate_left_listbox(self, folder_path):
         self.left_listbox.delete(0, tk.END)
@@ -337,7 +370,7 @@ class WeatherApp:
         for file_name in os.listdir(folder_path):
             if file_name.endswith('.envparam'):
                 name = file_name.replace('.envparam', '')
-                if name not in existing_names:
+                if name not in existing_names and name not in self.exclusion_list:
                     self.left_listbox.insert(tk.END, name)
 
     def open_transitions(self):
