@@ -60,6 +60,9 @@ class WeatherApp:
         self.toggle_tooltips_button = tk.Button(button_frame, text="Enable Tooltips", command=self.toggle_tooltips, width=button_width)
         self.toggle_tooltips_button.pack(side=tk.BOTTOM, pady=5)
 
+        self.film_grain_button = tk.Button(button_frame, text="Film Grain", command=self.open_film_grain, width=button_width)
+        self.film_grain_button.pack(side=tk.BOTTOM, pady=5)
+
         self.debug_button = tk.Button(button_frame, text="Debug", command=self.open_global_properties, width=button_width)
         self.debug_button.pack(side=tk.BOTTOM, pady=5)
 
@@ -372,6 +375,9 @@ class WeatherApp:
 
     def open_global_properties(self):
         subprocess.Popen(['python', 'global_properties.py'])
+
+    def open_film_grain(self):
+        subprocess.Popen(['python', 'film_grain.py'])
 
     def on_closing(self):
         self.stop_watching = True
