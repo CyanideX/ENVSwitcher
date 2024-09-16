@@ -113,8 +113,7 @@ class EditTransitionsApp:
         left_inner_frame.bind("<Configure>", lambda e: left_canvas.configure(scrollregion=left_canvas.bbox("all")))
         right_inner_frame.bind("<Configure>", lambda e: right_canvas.configure(scrollregion=right_canvas.bbox("all")))
 
-        self.watch_thread = threading.Thread(target=self.watch_file)
-        self.watch_thread.daemon = True
+        self.watch_thread = threading.Thread(target=self.watch_file, daemon=True)
         self.watch_thread.start()
 
     def _bind_mousewheel(self, event, canvas):
@@ -372,7 +371,6 @@ class EditTransitionsApp:
 
     def on_closing(self):
         self.stop_watching = True
-        self.watch_thread.join()
         self.root.destroy()
 
 if __name__ == "__main__":
