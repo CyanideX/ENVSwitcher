@@ -1,0 +1,19 @@
+{
+    "exclusionList": [
+        "24h_weather_sunny",
+        "24h_weather_rain",
+        "24h_weather_fog",
+        "24h_weather_pollution",
+        "24h_weather_toxic_rain",
+        "24h_weather_sandstorm",
+        "24h_weather_light_clouds",
+        "24h_weather_cloudy",
+        "24h_weather_heavy_clouds",
+        "q302_squat_morning",
+        "q302_deeb_blue",
+        "sa_courier_clouds",
+        "q306_epilogue_cloudy_morning",
+        "q306_rainy_night",
+        "q302_light_rain"
+    ]
+}
