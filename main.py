@@ -6,6 +6,8 @@ class WeatherApp:
     def __init__(self, root):
         self.exclusion_list = ["24h_weather_sunny", "24h_weather_rain", "24h_weather_fog", "24h_weather_pollution", "24h_weather_toxic_rain", "24h_weather_sandstorm", "24h_weather_light_clouds", "24h_weather_cloudy", "24h_weather_heavy_clouds", "q302_squat_morning", "q302_deeb_blue", "sa_courier_clouds", "q306_epilogue_cloudy_morning", "q306_rainy_night", "q302_light_rain"]
 
+        self.exclusion_list_export = ["q302_squat_morning", "q302_deeb_blue", "sa_courier_clouds", "q306_epilogue_cloudy_morning", "q306_rainy_night", "q302_light_rain"]
+
         self.root = root
         self.root.title("Weather State Manager")
         self.root.minsize(550, 380)
@@ -53,6 +55,9 @@ class WeatherApp:
 
         self.save_button = tk.Button(button_frame, text="Save", command=self.save_states, width=button_width)
         self.save_button.pack(pady=5)
+
+        self.export_button = tk.Button(button_frame, text="Export States", command=self.export_states, width=button_width)
+        self.export_button.pack(pady=5)
 
         self.reload_button = tk.Button(button_frame, text="Reload JSON", command=self.reload_json, width=button_width)
         self.reload_button.pack(side=tk.BOTTOM, pady=5)
@@ -104,6 +109,36 @@ class WeatherApp:
             if state['Data']['name']['$value'] == name:
                 return state['HandleId']
         return None
+
+    def export_states(self):
+        active_states = []
+        for index in range(self.right_listbox.size()):
+            file_name = self.right_listbox.get(index)
+            if file_name not in self.exclusion_list_export:
+                localized_name = self.generate_localized_name(file_name)
+                category = 1 if file_name in self.exclusion_list else 2
+                dlssd_flag = True
+                active_states.append([file_name, localized_name, category, dlssd_flag])
+        
+        if active_states:
+            export_path = "exportedWeatherStates.json"
+            with open(export_path, 'w') as file:
+                file.write("local weatherStates = {\n")
+                for state in active_states:
+                    file.write(f"\t{{ '{state[0]}', '{state[1]}', {state[2]}, {str(state[3]).lower()} }},\n")
+                file.write("}\n")
+            messagebox.showinfo("Export Successful", f"Active states exported to {export_path}")
+        else:
+            messagebox.showinfo("No Active States", "No active states found to export.")
+
+    def generate_localized_name(self, file_name):
+        if file_name.startswith('q302_'):
+            name = file_name.replace('q302_', '')
+        elif file_name.startswith('24h_weather_'):
+            name = file_name.replace('24h_weather_', '')
+        else:
+            name = file_name
+        return ' '.join(word.capitalize() for word in name.split('_'))
     
     def remove_transitions(self, handle_id):
         transitions = self.data['Data']['RootChunk']['weatherStateTransitions']

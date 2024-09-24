@@ -2,3 +2,4 @@
 env_file_path.txt
 /modules/__pycache__
 /__pycache__
+exportedWeatherStates.json
