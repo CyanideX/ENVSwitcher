@@ -117,7 +117,7 @@ class WeatherApp:
             if file_name not in self.exclusion_list_export:
                 localized_name = self.generate_localized_name(file_name)
                 category = 1 if file_name in self.exclusion_list else 2
-                dlssd_flag = True
+                dlssd_flag = self.get_dlssd_flag(file_name)
                 active_states.append([file_name, localized_name, category, dlssd_flag])
         
         if active_states:
@@ -130,6 +130,16 @@ class WeatherApp:
             messagebox.showinfo("Export Successful", f"Active states exported to {export_path}")
         else:
             messagebox.showinfo("No Active States", "No active states found to export.")
+
+    def get_dlssd_flag(self, file_name):
+        for state in self.data.get('Data', {}).get('RootChunk', {}).get('weatherStates', []):
+            if state['Data']['name']['$value'] == file_name:
+                effect_value = state['Data']['effect']['DepotPath']['$value']
+                if effect_value == 0:
+                    return False
+                elif effect_value.endswith('.effect'):
+                    return True
+        return False
 
     def generate_localized_name(self, file_name):
         if file_name.startswith('q302_'):
