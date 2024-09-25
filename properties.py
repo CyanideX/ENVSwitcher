@@ -1,10 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
-import json
-import os
-import threading
-import time
+import json, os, threading, time
 
 class EditPropertiesApp:
     def __init__(self, root):
@@ -54,14 +51,19 @@ class EditPropertiesApp:
         self.file_watcher_thread.start()
 
     def create_entries(self, parent):
-        labels = ["Min Duration", "Max Duration", "Probability", "Transition Duration"]
+        labels = ["Min Duration", "Max Duration", "Probability", "Transition Duration", "Effect DepotPath"]
         for label in labels:
             frame = tk.Frame(parent)
             frame.pack(fill=tk.X, padx=10, pady=5)
             tk.Label(frame, text=label).pack(side=tk.LEFT)
-            entry = tk.Entry(frame)
+            entry = tk.Entry(frame, justify='right' if label == "Effect DepotPath" else 'left')
             entry.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+            if label == "Effect DepotPath":
+                entry.bind("<KeyRelease>", self.scroll_to_end)
             self.entries[label] = entry
+
+    def scroll_to_end(self, event):
+        event.widget.xview_moveto(1)
 
     def get_env_file_path(self):
         if os.path.exists('env_file_path.txt'):
@@ -105,6 +107,10 @@ class EditPropertiesApp:
             self.entries["Transition Duration"].delete(0, tk.END)
             self.entries["Transition Duration"].insert(0, self.get_value(state_data, 'transitionDuration'))
 
+            self.entries["Effect DepotPath"].delete(0, tk.END)
+            self.entries["Effect DepotPath"].insert(0, self.get_value(state_data, 'effect', 'DepotPath'))
+            self.entries["Effect DepotPath"].xview_moveto(1)
+
     def save_changes(self):
         if self.current_selection is not None:
             selected_state = self.left_listbox.get(self.current_selection)
@@ -126,6 +132,14 @@ class EditPropertiesApp:
             update_field('probability', 'Probability')
             update_field('transitionDuration', 'Transition Duration')
 
+            depot_path = self.entries["Effect DepotPath"].get()
+            state_data['effect']['DepotPath']['$value'] = depot_path
+
+            if depot_path == "" or depot_path == "0":
+                state_data['effect']['DepotPath']['$storage'] = "uint64"
+            else:
+                state_data['effect']['DepotPath']['$storage'] = "string"
+
             self.save_json(self.env_file_path)
 
             # Highlight the selected state
@@ -140,11 +154,18 @@ class EditPropertiesApp:
     def clear_confirmation(self):
         self.confirm_label.config(text="")
 
-    def get_value(self, state_data, key):
-        value = state_data.get(key, None)
-        if value is None or value['Elements'][0]['Value'] is None:
+    def get_value(self, state_data, key, subkey=None):
+        if subkey:
+            value = state_data.get(key, {}).get(subkey, None)
+        else:
+            value = state_data.get(key, None)
+        if value is None:
             return ""
-        return value['Elements'][0]['Value']
+        if isinstance(value, dict) and 'Elements' in value:
+            return value['Elements'][0]['Value']
+        if isinstance(value, dict) and '$value' in value:
+            return value['$value']
+        return value
 
     def get_entry_value(self, entry):
         value = entry.get()
