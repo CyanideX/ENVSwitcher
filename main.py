@@ -137,8 +137,11 @@ class WeatherApp:
             export_path = "exportedWeatherStates.json"
             with open(export_path, 'w') as file:
                 file.write('local weatherStates = {\n')
-                for state in active_states:
-                    file.write(f'\t{{ "{state[0]}", "{state[1]}", {state[2]}, {str(state[3]).lower()} }},\n')
+                for i, state in enumerate(active_states):
+                    if i == len(active_states) - 1:
+                        file.write(f'\t{{ "{state[0]}", "{state[1]}", {state[2]}, {str(state[3]).lower()} }}\n')
+                    else:
+                        file.write(f'\t{{ "{state[0]}", "{state[1]}", {state[2]}, {str(state[3]).lower()} }},\n')
                 file.write('}\n')
             messagebox.showinfo("Export Successful", f"Active states exported to {export_path}")
         else:
