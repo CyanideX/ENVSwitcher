@@ -133,12 +133,16 @@ class EditPropertiesApp:
             update_field('transitionDuration', 'Transition Duration')
 
             depot_path = self.entries["Effect DepotPath"].get()
-            state_data['effect']['DepotPath']['$value'] = depot_path
-
             if depot_path == "" or depot_path == "0":
                 state_data['effect']['DepotPath']['$storage'] = "uint64"
+                state_data['effect']['DepotPath']['$value'] = 0
             else:
                 state_data['effect']['DepotPath']['$storage'] = "string"
+                if not depot_path.endswith(".effect"):
+                    messagebox.showwarning("Warning", "Depot path should end with '.effect'")
+                    return  # Do not save changes
+
+            state_data['effect']['DepotPath']['$value'] = depot_path
 
             self.save_json(self.env_file_path)
 
