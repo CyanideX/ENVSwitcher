@@ -59,6 +59,10 @@ class WeatherApp:
         self.export_button = tk.Button(button_frame, text="Export States", command=self.export_states, width=button_width)
         self.export_button.pack(pady=5)
 
+        # Add the new button in the __init__ method
+        self.select_json_button = tk.Button(button_frame, text="Select JSON", command=self.select_json_file, width=button_width)
+        self.select_json_button.pack(side=tk.BOTTOM, pady=5)
+
         self.reload_button = tk.Button(button_frame, text="Reload JSON", command=self.reload_json, width=button_width)
         self.reload_button.pack(side=tk.BOTTOM, pady=5)
 
@@ -81,6 +85,15 @@ class WeatherApp:
 
         self.tooltip = None
         self.tooltips_enabled = False
+    
+    # Add the new method to handle selecting a new JSON file
+    def select_json_file(self):
+        file_path = filedialog.askopenfilename(title="Select main env.json file", filetypes=(("JSON files", "*.json"), ("all files", "*.*")))
+        if file_path:
+            self.env_file_path = file_path
+            with open('env_file_path.txt', 'w') as file:
+                file.write(file_path)
+            self.reload_json()
     
     def show_tooltip(self, event):
         if not self.tooltips_enabled:
