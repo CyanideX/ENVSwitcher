@@ -1,8 +1,12 @@
 # env_switcher
  Switch envparams and customize your weather!
 
+
+![ENVSwitcher](https://github.com/user-attachments/assets/9bc03fcc-c422-47b8-8957-8012003a9b5e)
+
+
  # How to use it:
- First, in WolvenKit, convert your master .env file to json format.
+ First, in WolvenKit, convert your master .env file to json format. Ensure that there are `.envparam` files in your project; the Weather State Manager will look for those in the same project directory as your env json and populate the lists accordingly.
 
  Run `main.py` and select the location of your master env.json.
 
