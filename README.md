@@ -6,7 +6,9 @@
 
 
  # How to use it:
- First, in WolvenKit, convert your master .env file to json format. Ensure that there are `.envparam` files in your project; the Weather State Manager will look for those in the same project directory as your env json and populate the lists accordingly.
+ First, ***and most importantly***, in WolvenKit, <ins>**convert your master .env file to json format**</ins>. 
+ 
+ Ensure that there are `.envparam` files in your project; the Weather State Manager will look for those in the same project directory as your env json and populate the lists accordingly.
 
  Run `main.py` and select the location of your master env.json.
 

@@ -124,25 +124,28 @@ class WeatherApp:
         return None
 
     def export_states(self):
-        active_states = []
+        categories = {
+            "Category 1": {"order": 1, "states": []},
+            "Category 2": {"order": 2, "states": []}
+        }
+
         for index in range(self.right_listbox.size()):
             file_name = self.right_listbox.get(index)
             if file_name not in self.exclusion_list_export:
                 localized_name = self.generate_localized_name(file_name)
-                category = 1 if file_name in self.exclusion_list else 2
                 dlssd_flag = self.get_dlssd_flag(file_name)
-                active_states.append([file_name, localized_name, category, dlssd_flag])
-        
-        if active_states:
+                category = "Category 1" if file_name in self.exclusion_list else "Category 2"
+                categories[category]["states"].append({
+                    "name": localized_name,
+                    "location": file_name,
+                    "DLSSDSeparateParticleColor": dlssd_flag,
+                    "weatherType": []
+                })
+
+        if any(category["states"] for category in categories.values()):
             export_path = "exportedWeatherStates.json"
             with open(export_path, 'w') as file:
-                file.write('local weatherStates = {\n')
-                for i, state in enumerate(active_states):
-                    if i == len(active_states) - 1:
-                        file.write(f'\t{{ "{state[0]}", "{state[1]}", {state[2]}, {str(state[3]).lower()} }}\n')
-                    else:
-                        file.write(f'\t{{ "{state[0]}", "{state[1]}", {state[2]}, {str(state[3]).lower()} }},\n')
-                file.write('}\n')
+                json.dump(categories, file, indent=4)
             messagebox.showinfo("Export Successful", f"Active states exported to {export_path}")
         else:
             messagebox.showinfo("No Active States", "No active states found to export.")
